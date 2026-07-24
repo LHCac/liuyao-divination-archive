@@ -1,52 +1,30 @@
-# 易學知識庫｜八字、六爻與易經資料庫
+# 六爻占卜知識與案例資料庫
 
-本 repository 用來整理八字、六爻、易經卦象、實戰案例與案例回饋。
+本 repository 專門整理六爻占卜知識、斷卦規則、六十四卦資料、解卦模板、實戰案例與事後回饋。
 
-為避免八字與六爻規則混用，資料已依系統分開管理。
-
-## 資料分區
-
-- [六爻資料系統](liuyao/README.md)：單一事件、短期發展、世應用神、月日動變與案例回饋。
-- [八字資料系統](bazi/README.md)：日主、月令、旺衰、格局、用神、大運流年與長期人生結構。
-- [易經資料](yijing/)：卦義、人生哲理與心理應用，不直接等同六爻斷卦規則。
-- [八字與六爻互參](cross_reference/README.md)：重大選擇與長短期資訊的交叉參考。
+八字資料已分離至 `export/bazi-standalone` 匯出分支，可下載後另建全新的八字 repository；本 repository 後續不再混放八字內容。
 
 ## 資料夾結構
 
 ```text
-liuyao-divination-archive/
-├── README.md
-├── liuyao/
-│   ├── 00_index/
-│   ├── 01_foundation/
-│   ├── 02_rules/
-│   ├── 03_hexagrams/
-│   ├── 04_question_types/
-│   ├── 05_reading_templates/
-│   ├── 06_case_archive/
-│   └── 99_sources/
-├── bazi/
-│   ├── 00_index/
-│   ├── 01_foundation/
-│   ├── 02_ten_gods/
-│   ├── 03_stems_branches/
-│   ├── 04_pattern_structure/
-│   ├── 05_luck_cycles/
-│   ├── 06_question_types/
-│   ├── 07_reading_templates/
-│   ├── 08_case_archive/
-│   └── 99_sources/
-├── yijing/
-└── cross_reference/
+├── 00_index/              六爻索引與總導覽
+├── 01_foundation/         陰陽、五行、干支、八卦等基礎
+├── 02_rules/              六親、六神、用神、旺衰、動變、沖合等規則
+├── 03_hexagrams/          六十四卦資料
+├── 04_question_types/     感情、工作、財運、健康等問事分類
+├── 05_reading_templates/  起卦輸入與解卦 SOP
+├── 06_case_archive/       個人案例、書籍案例與後續驗證
+└── 99_sources/            六爻來源與補充資料
 ```
 
-## 使用原則
+## 六爻分析順序
 
 ```text
-長期命盤結構：優先查 bazi/。
-單一事件與短期發展：優先查 liuyao/。
-純卦義或人生哲理：查 yijing/。
-重大選擇：先以八字看底層方向，再以六爻看當下事件。
+1. 完整列出六神、六親、爻位、地支五行、世應、動爻與變爻。
+2. 確認用神與占問主題。
+3. 分析世應、月建、日辰、旺衰、空亡、沖合與動變。
+4. 參考同類案例及事後回饋修正。
+5. 說明不確定處，最後提供可執行的現實建議。
 ```
 
-六爻與八字分析均應以完整結構與實際回饋為準，不以單一象意硬斷。
+感情占問應區分吸引、曖昧、朋友、承諾與現實經營；焦慮升高時，應改問「接下來怎麼做比較穩」，不反覆追占對方即時心意。
