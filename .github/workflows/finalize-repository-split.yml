@@ -1,0 +1,125 @@
+name: Finalize repository split
+
+on:
+  push:
+    branches:
+      - chore/separate-bazi-liuyao-structure
+  pull_request:
+    types: [synchronize, reopened]
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  split:
+    if: github.head_ref == 'chore/separate-bazi-liuyao-structure' || github.ref == 'refs/heads/chore/separate-bazi-liuyao-structure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout organizing branch
+        uses: actions/checkout@v4
+        with:
+          ref: chore/separate-bazi-liuyao-structure
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create standalone Bazi export branch
+        run: |
+          set -euo pipefail
+          START_SHA="$(git rev-parse HEAD)"
+          rm -rf /tmp/bazi-export
+          mkdir -p /tmp/bazi-export
+          cp -a bazi/. /tmp/bazi-export/
+
+          git switch -C export/bazi-standalone "$START_SHA"
+          git rm -r --ignore-unmatch .
+          cp -a /tmp/bazi-export/. .
+
+          cat > README.md <<'EOF'
+          # 八字知識庫
+
+          本分支是從 `liuyao-divination-archive` 分離出的八字資料，可直接下載後建立全新的八字 repository。
+
+          ## 資料夾結構
+
+          ```text
+          ├── 00_index/              八字索引與總導覽
+          ├── 01_foundation/         八字基礎概念
+          ├── 02_ten_gods/           十神系統
+          ├── 03_stems_branches/     天干地支、藏干、刑沖合害
+          ├── 04_pattern_structure/  格局、旺衰、用神喜忌
+          ├── 05_luck_cycles/        大運、流年、流月
+          ├── 06_question_types/     八字問事分類
+          ├── 07_reading_templates/  八字解析模板
+          ├── 08_case_archive/       八字案例與回饋
+          └── 99_sources/            八字來源資料
+          ```
+
+          ## 使用原則
+
+          八字分析以日主為核心，先看月令，再看旺衰、格局、用神、喜忌，最後配合大運流年；古文重語應降火修正，不以單一十神或格局硬斷吉凶。
+          EOF
+
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "建立可獨立下載的八字資料庫匯出分支"
+          fi
+          git push --force origin export/bazi-standalone
+
+          git switch -C chore/separate-bazi-liuyao-structure "$START_SHA"
+
+      - name: Convert current repository branch to Liúyáo only
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/liuyao-only
+          mkdir -p /tmp/liuyao-only
+          cp -a liuyao/. /tmp/liuyao-only/
+
+          git rm -r --ignore-unmatch .
+          cp -a /tmp/liuyao-only/. .
+
+          cat > README.md <<'EOF'
+          # 六爻占卜知識與案例資料庫
+
+          本 repository 專門整理六爻占卜知識、斷卦規則、六十四卦資料、解卦模板、實戰案例與事後回饋。
+
+          八字資料已分離至 `export/bazi-standalone` 匯出分支，可下載後另建全新的八字 repository；本 repository 後續不再混放八字內容。
+
+          ## 資料夾結構
+
+          ```text
+          ├── 00_index/              六爻索引與總導覽
+          ├── 01_foundation/         陰陽、五行、干支、八卦等基礎
+          ├── 02_rules/              六親、六神、用神、旺衰、動變、沖合等規則
+          ├── 03_hexagrams/          六十四卦資料
+          ├── 04_question_types/     感情、工作、財運、健康等問事分類
+          ├── 05_reading_templates/  起卦輸入與解卦 SOP
+          ├── 06_case_archive/       個人案例、書籍案例與後續驗證
+          └── 99_sources/            六爻來源與補充資料
+          ```
+
+          ## 六爻分析順序
+
+          ```text
+          1. 完整列出六神、六親、爻位、地支五行、世應、動爻與變爻。
+          2. 確認用神與占問主題。
+          3. 分析世應、月建、日辰、旺衰、空亡、沖合與動變。
+          4. 參考同類案例及事後回饋修正。
+          5. 說明不確定處，最後提供可執行的現實建議。
+          ```
+
+          感情占問應區分吸引、曖昧、朋友、承諾與現實經營；焦慮升高時，應改問「接下來怎麼做比較穩」，不反覆追占對方即時心意。
+          EOF
+
+          rm -f .github/workflows/finalize-repository-split.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+
+          git add -A
+          git commit -m "將原 repository 整理為六爻專用資料庫"
+          git push --force origin chore/separate-bazi-liuyao-structure
