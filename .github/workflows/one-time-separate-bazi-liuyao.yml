@@ -1,0 +1,259 @@
+name: One-time separate BaZi and LiuYao folders
+
+on:
+  push:
+    branches:
+      - chore/separate-bazi-liuyao-structure
+
+permissions:
+  contents: write
+
+jobs:
+  reorganize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reorganize knowledge base
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python <<'PY'
+          from pathlib import Path
+          import shutil
+
+          ROOT = Path('.')
+
+          def unique_conflict_path(base: Path) -> Path:
+              if not base.exists():
+                  return base
+              index = 2
+              while True:
+                  candidate = base.with_name(f"{base.stem}_{index}{base.suffix}")
+                  if not candidate.exists():
+                      return candidate
+                  index += 1
+
+          def safe_move_file(source: Path, target: Path, conflict_root: Path) -> None:
+              if not source.exists():
+                  return
+              target.parent.mkdir(parents=True, exist_ok=True)
+              if not target.exists():
+                  shutil.move(str(source), str(target))
+                  return
+              if source.read_bytes() == target.read_bytes():
+                  source.unlink()
+                  return
+              conflict = unique_conflict_path(conflict_root / target.name)
+              conflict.parent.mkdir(parents=True, exist_ok=True)
+              shutil.move(str(source), str(conflict))
+
+          def merge_directory(source: Path, target: Path) -> None:
+              if not source.exists():
+                  return
+              target.mkdir(parents=True, exist_ok=True)
+              conflict_root = target / '_migration_conflicts'
+              files = [path for path in source.rglob('*') if path.is_file()]
+              for path in sorted(files, key=lambda item: str(item)):
+                  relative = path.relative_to(source)
+                  destination = target / relative
+                  if destination.exists() and path.read_bytes() != destination.read_bytes():
+                      conflict = unique_conflict_path(conflict_root / relative)
+                      conflict.parent.mkdir(parents=True, exist_ok=True)
+                      shutil.move(str(path), str(conflict))
+                  elif destination.exists():
+                      path.unlink()
+                  else:
+                      destination.parent.mkdir(parents=True, exist_ok=True)
+                      shutil.move(str(path), str(destination))
+              if source.exists():
+                  shutil.rmtree(source)
+
+          # Separate the system indexes.
+          (ROOT / 'bazi/00_index').mkdir(parents=True, exist_ok=True)
+          (ROOT / 'liuyao/00_index').mkdir(parents=True, exist_ok=True)
+          safe_move_file(
+              ROOT / '00_index/八字索引.md',
+              ROOT / 'bazi/00_index/八字索引.md',
+              ROOT / 'bazi/00_index/_migration_conflicts',
+          )
+          safe_move_file(
+              ROOT / '00_index/六爻索引.md',
+              ROOT / 'liuyao/00_index/六爻索引.md',
+              ROOT / 'liuyao/00_index/_migration_conflicts',
+          )
+          safe_move_file(
+              ROOT / '00_index/資料索引.md',
+              ROOT / 'liuyao/00_index/資料索引.md',
+              ROOT / 'liuyao/00_index/_migration_conflicts',
+          )
+          merge_directory(ROOT / '00_index', ROOT / 'liuyao/00_index')
+
+          # Merge the newer classified LiuYao cases into the canonical case archive.
+          merge_directory(ROOT / 'liuyao/03_case_archive', ROOT / 'liuyao/06_case_archive')
+
+          # Move all legacy root-level LiuYao sections under liuyao/.
+          for folder in (
+              '01_foundation',
+              '02_rules',
+              '03_hexagrams',
+              '04_question_types',
+              '05_reading_templates',
+              '06_case_archive',
+              '99_sources',
+          ):
+              merge_directory(ROOT / folder, ROOT / 'liuyao' / folder)
+          PY
+
+          cat > README.md <<'EOF'
+          # 易學知識庫｜八字、六爻與易經資料庫
+
+          本 repository 用來整理八字、六爻、易經卦象、實戰案例與案例回饋。
+
+          為避免八字與六爻規則混用，資料已依系統分開管理。
+
+          ## 資料分區
+
+          - [六爻資料系統](liuyao/README.md)：單一事件、短期發展、世應用神、月日動變與案例回饋。
+          - [八字資料系統](bazi/README.md)：日主、月令、旺衰、格局、用神、大運流年與長期人生結構。
+          - [易經資料](yijing/)：卦義、人生哲理與心理應用，不直接等同六爻斷卦規則。
+          - [八字與六爻互參](cross_reference/README.md)：重大選擇與長短期資訊的交叉參考。
+
+          ## 資料夾結構
+
+          ```text
+          liuyao-divination-archive/
+          ├── README.md
+          ├── liuyao/
+          │   ├── 00_index/
+          │   ├── 01_foundation/
+          │   ├── 02_rules/
+          │   ├── 03_hexagrams/
+          │   ├── 04_question_types/
+          │   ├── 05_reading_templates/
+          │   ├── 06_case_archive/
+          │   └── 99_sources/
+          ├── bazi/
+          │   ├── 00_index/
+          │   ├── 01_foundation/
+          │   ├── 02_ten_gods/
+          │   ├── 03_stems_branches/
+          │   ├── 04_pattern_structure/
+          │   ├── 05_luck_cycles/
+          │   ├── 06_question_types/
+          │   ├── 07_reading_templates/
+          │   ├── 08_case_archive/
+          │   └── 99_sources/
+          ├── yijing/
+          └── cross_reference/
+          ```
+
+          ## 使用原則
+
+          ```text
+          長期命盤結構：優先查 bazi/。
+          單一事件與短期發展：優先查 liuyao/。
+          純卦義或人生哲理：查 yijing/。
+          重大選擇：先以八字看底層方向，再以六爻看當下事件。
+          ```
+
+          六爻與八字分析均應以完整結構與實際回饋為準，不以單一象意硬斷。
+          EOF
+
+          cat > liuyao/README.md <<'EOF'
+          # liuyao：六爻資料系統
+
+          本資料夾集中存放六爻占卜知識、斷卦規則、六十四卦資料、解卦模板與案例回饋，與八字資料分開管理。
+
+          ## 資料夾結構
+
+          ```text
+          liuyao/
+          ├── 00_index/              六爻索引與總導覽
+          ├── 01_foundation/         陰陽、五行、干支、八卦等基礎
+          ├── 02_rules/              六親、六神、用神、旺衰、動變、沖合等規則
+          ├── 03_hexagrams/          六十四卦資料
+          ├── 04_question_types/     感情、工作、財運、健康等問事分類
+          ├── 05_reading_templates/  起卦輸入與解卦 SOP
+          ├── 06_case_archive/       個人案例、書籍案例與後續驗證
+          └── 99_sources/            六爻來源與補充資料
+          ```
+
+          ## 六爻分析順序
+
+          ```text
+          1. 完整列出六神、六親、爻位、地支五行、世應、動爻與變爻。
+          2. 確認用神與占問主題。
+          3. 分析世應、月建、日辰、旺衰、空亡、沖合與動變。
+          4. 參考同類案例及事後回饋修正。
+          5. 說明不確定處，最後提供可執行的現實建議。
+          ```
+
+          感情占問應區分吸引、曖昧、朋友、承諾與現實經營；焦慮升高時，應改問「接下來怎麼做比較穩」，不反覆追占對方即時心意。
+          EOF
+
+          cat > liuyao/00_index/六爻索引.md <<'EOF'
+          # 六爻索引
+
+          本索引用於快速進入六爻資料系統。
+
+          ## 六爻資料位置
+
+          - [六爻基礎](../01_foundation/)
+          - [斷卦規則](../02_rules/)
+          - [六十四卦](../03_hexagrams/)
+          - [問事分類](../04_question_types/)
+          - [解卦模板與 SOP](../05_reading_templates/)
+          - [案例與回饋](../06_case_archive/)
+          - [來源資料](../99_sources/)
+
+          ## 使用定位
+
+          六爻優先處理單一事件、短期變化、對方與自身的關係位置、工作合作、感情互動、尋物、健康象意與應期。
+
+          判斷時不能只看卦名或單一爻，必須合參用神、世應、月日、動變、空亡、沖合與案例回饋。
+          EOF
+
+          cat > bazi/00_index/八字索引.md <<'EOF'
+          # 八字索引
+
+          本索引用於快速進入八字資料系統。
+
+          ## 八字資料位置
+
+          - [八字基礎](../01_foundation/)
+          - [十神系統](../02_ten_gods/)
+          - [天干地支](../03_stems_branches/)
+          - [格局、旺衰與用神](../04_pattern_structure/)
+          - [大運流年](../05_luck_cycles/)
+          - [八字問事分類](../06_question_types/)
+          - [解析模板](../07_reading_templates/)
+          - [案例與回饋](../08_case_archive/)
+          - [來源資料](../99_sources/)
+
+          ## 使用定位
+
+          八字優先處理日主與月令、旺衰、格局、用神喜忌、性格結構、感情模式、事業財運、健康體質與大運流年。
+
+          判斷時應先原局、後行運；先結構、後事件；不可單憑一個十神、神煞或格局名稱硬斷吉凶。
+          EOF
+
+          # Remove the one-time workflow so it will not remain in the final PR.
+          rm -f .github/workflows/one-time-separate-bazi-liuyao.yml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No reorganization changes were required."
+            exit 0
+          fi
+
+          git commit -m "chore: separate BaZi and LiuYao knowledge folders"
+          git push origin HEAD
