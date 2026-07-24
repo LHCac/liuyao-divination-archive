@@ -1,62 +1,52 @@
-# liuyao-divination-archive
+# 易學知識庫｜八字、六爻與易經資料庫
 
-這是一個用來整理「六爻占卜」知識、斷卦規則與實戰案例的資料庫。
+本 repository 用來整理八字、六爻、易經卦象、實戰案例與案例回饋。
 
-## 專案用途
+為避免八字與六爻規則混用，資料已依系統分開管理。
 
-本資料庫分成兩個核心方向：
+## 資料分區
 
-1. **解析用知識庫**：整理六爻基礎概念、八卦、五行、天干地支、六親六神、用神、動爻、月建日辰等判斷規則。
-2. **案例經驗庫**：每次實際占卦後，保存問題、卦象、解析、後續驗證與經驗整理，逐步累積成個人斷卦系統。
+- [六爻資料系統](liuyao/README.md)：單一事件、短期發展、世應用神、月日動變與案例回饋。
+- [八字資料系統](bazi/README.md)：日主、月令、旺衰、格局、用神、大運流年與長期人生結構。
+- [易經資料](yijing/)：卦義、人生哲理與心理應用，不直接等同六爻斷卦規則。
+- [八字與六爻互參](cross_reference/README.md)：重大選擇與長短期資訊的交叉參考。
 
-## 目前資料夾規劃
+## 資料夾結構
 
 ```text
 liuyao-divination-archive/
 ├── README.md
-├── 00_index/
-│   └── 資料索引.md
-├── 01_foundation/
-│   ├── README.md
-│   ├── 00_六爻基礎總覽.md
-│   ├── 01_太極陰陽.md
-│   ├── 02_天干地支.md
-│   ├── 03_八卦.md
-│   └── 五行/
-│       ├── 00_五行總論.md
-│       ├── 01_水.md
-│       ├── 02_木.md
-│       ├── 03_火.md
-│       ├── 04_土.md
-│       └── 05_金.md
-├── 02_rules/
-├── 03_hexagrams/
-├── 04_question_types/
-├── 05_reading_templates/
-├── 06_case_archive/
-└── 99_sources/
+├── liuyao/
+│   ├── 00_index/
+│   ├── 01_foundation/
+│   ├── 02_rules/
+│   ├── 03_hexagrams/
+│   ├── 04_question_types/
+│   ├── 05_reading_templates/
+│   ├── 06_case_archive/
+│   └── 99_sources/
+├── bazi/
+│   ├── 00_index/
+│   ├── 01_foundation/
+│   ├── 02_ten_gods/
+│   ├── 03_stems_branches/
+│   ├── 04_pattern_structure/
+│   ├── 05_luck_cycles/
+│   ├── 06_question_types/
+│   ├── 07_reading_templates/
+│   ├── 08_case_archive/
+│   └── 99_sources/
+├── yijing/
+└── cross_reference/
 ```
 
-## 使用方式
+## 使用原則
 
-日後占卦時，先提供：
-
-```markdown
-## 問題
-
-## 背景
-
-## 卦象
-- 本卦：
-- 變卦：
-- 動爻：
-- 世爻：
-- 應爻：
-- 月建：
-- 日辰：
-- 空亡：
-
-## 想確認的重點
+```text
+長期命盤結構：優先查 bazi/。
+單一事件與短期發展：優先查 liuyao/。
+純卦義或人生哲理：查 yijing/。
+重大選擇：先以八字看底層方向，再以六爻看當下事件。
 ```
 
-解析時優先依照本資料庫中的規則與案例經驗，並在解卦後回存到 `06_case_archive/` 形成經驗累積。
+六爻與八字分析均應以完整結構與實際回饋為準，不以單一象意硬斷。
